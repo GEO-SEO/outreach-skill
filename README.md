@@ -147,7 +147,7 @@ Status
 
 The core workflow lives here:
 
-- [`skills/email-outreach.md`](/Users/timlin/Downloads/outreach-skill/skills/email-outreach.md)
+- [`skills/email-outreach.md`](./skills/email-outreach.md)
 
 Use it when you want to turn outreach opportunities into personalized drafts and structured send workflows.
 
