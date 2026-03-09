@@ -2,15 +2,15 @@
 [![Workflow](https://img.shields.io/badge/workflow-Opportunity%20%E2%86%92%20Contact%20%E2%86%92%20Email-blue)](./skills/email-outreach.md)
 [![Outputs](https://img.shields.io/badge/output-Contacts%20%7C%20Analysis%20%7C%20Emails-orange)](./skills/email-outreach.md)
 
-# Outreach Skill
+# SEO Outreach Skill
 
-![Outreach Skill Cover](./assets/cover.svg)
+![SEO Outreach Skill Cover](./assets/cover.svg)
 
 > Turn backlink opportunities into personalized outreach workflows with article analysis, contact discovery, and ready-to-send emails.
 
 **Positioning**
 
-Outreach Skill is built for teams that want to scale link building without falling back to generic spammy templates.
+SEO Outreach Skill is built for teams that want to scale link building without falling back to generic spammy templates.
 
 It is designed to turn a raw outreach opportunity into:
 
@@ -154,7 +154,7 @@ Use it when you want to turn outreach opportunities into personalized drafts and
 ## Repo Structure
 
 ```text
-outreach-skill/
+seo-outreach-skill/
 ├── README.md
 ├── LICENSE
 ├── assets/
