@@ -1,31 +1,26 @@
 ---
 name: link-building-outreach
-description: Use this skill when the user wants to automate link building outreach, send outreach emails for backlinks, find contact information for article authors, generate personalized outreach emails, process a list of link opportunities, or run an outreach campaign. Trigger this skill whenever the user mentions "outreach", "link building", "邮件外链", "contact author", "backlink campaign", "find email for", or asks to process a spreadsheet of outreach targets. Also trigger when the user says "run outreach", "setup outreach", or wants to scale their link building efforts.
+description: Use this skill when the user wants to review link-building outreach opportunities, find contact information for article authors, generate personalized outreach drafts, process a list of opportunities, or prepare an outreach campaign for manual sending. Trigger this skill whenever the user mentions "outreach", "link building", "邮件外链", "contact author", "backlink campaign", "find email for", or asks to process a spreadsheet or CSV of outreach targets.
 metadata:
   author: GEO-SEO
-  version: "1.0.4"
+  version: "1.0.5"
   homepage: https://github.com/GEO-SEO/seo-outreach-skill
   primaryEnv: SERPAPI_API_KEY
   requires:
     env:
       - SERPAPI_API_KEY
       - GOOGLE_SHEETS_TRACKER_URL
-      - GMAIL_ADDRESS
-      - GMAIL_APP_PASSWORD
-    config:
-      - credentials.json
-      - token.json
     bins:
       - python3
 ---
 
 # Link Building Outreach Skill
 
-Automates the full link building outreach pipeline: reads your opportunity list, finds author contacts, deeply analyzes target articles, and generates personalized outreach emails — ready to send.
+Reviews the full link building outreach pipeline: reads your opportunity list, finds author contacts, analyzes target articles, and generates personalized outreach drafts for manual sending.
 
 ## Overview
 
-Use this skill to turn outreach opportunities into a structured workflow: article analysis, contact discovery, personalized email drafting, and optional follow-up handling.
+Use this skill to turn outreach opportunities into a structured workflow: article analysis, contact discovery, personalized email drafting, and follow-up planning.
 
 ## Best For
 
@@ -41,11 +36,11 @@ Setup outreach — my product is https://yourproduct.com, my audience is SEO tea
 ```
 
 ```text
-Run outreach
+Prepare outreach drafts
 ```
 
 ```text
-Run outreach on https://example.com/best-seo-tools
+Prepare outreach drafts for https://example.com/best-seo-tools
 ```
 
 ## External Access And Minimum Credentials
@@ -54,8 +49,7 @@ This workflow can touch external services. Use the minimum credentials needed fo
 
 - `GOOGLE_SHEETS_TRACKER_URL`: optional source for opportunity rows; prefer read-only or exported CSV
 - `SERPAPI_API_KEY`: recommended for article discovery and search-driven contact research
-- `GMAIL_ADDRESS` and `GMAIL_APP_PASSWORD`: only needed for actual sending or inbox polling
-- `credentials.json` and `token.json`: OAuth alternative for Gmail / Workspace setups
+- no mail credentials are required for research and draft generation
 
 If these are unavailable:
 
@@ -65,13 +59,12 @@ If these are unavailable:
 
 ## Access Policy
 
-Safe default: this skill should stop at research, contact discovery, and draft generation unless sending is explicitly enabled.
+Safe default: this skill should stop at research, contact discovery, and draft generation.
 
 - spreadsheet input is optional; pasted tables and CSV exports are valid inputs
-- email sending is optional and must be explicitly enabled by the user
-- inbox polling is optional and must be explicitly enabled by the user
 - do not assume Gmail, Workspace, inbox, or sheet access by default
 - if credentials are missing, produce drafts and a send-ready checklist instead of pretending delivery happened
+- if the user wants delivery, hand off to a separately approved sender workflow rather than assuming this skill can send mail directly
 
 **Core principle:** The only reason outreach emails don't get replies is that authors can tell in one second it's a mass template. Every step in this pipeline exists to produce one thing: an email that could only have been written for that specific article.
 
@@ -80,7 +73,7 @@ Safe default: this skill should stop at research, contact discovery, and draft g
 - Before or during a link building campaign
 - Processing a batch of outreach opportunities from a spreadsheet
 - Finding contact info for article authors
-- Generating personalized emails at scale
+- Generating personalized outreach drafts at scale
 - Single-opportunity quick outreach
 
 ## Quick Start
@@ -89,7 +82,7 @@ Safe default: this skill should stop at research, contact discovery, and draft g
 > "Setup outreach — my product is [URL], my audience is [description], my name is [name], my title is [title]"
 
 **Every time after:**
-> "Run outreach" or "Run outreach from this CSV / sheet export"
+> "Prepare outreach drafts" or "Prepare outreach drafts from this CSV / sheet export"
 
 ---
 
@@ -425,250 +418,19 @@ User reviews each row. Confidence-based actions before sending:
 
 ---
 
-#### Part 2: Gmail setup + bulk send
+#### Part 2: Handoff for sending and reply handling
 
-Once the user confirms the report, immediately ask:
+This public skill stops at reviewed drafts, contact notes, and follow-up plans.
 
-> "Ready to send. Which Gmail auth method do you want to use?
-> - **App Password** — personal accounts, setup in 5 minutes
-> - **OAuth2** — Google Workspace or shared team accounts"
+If the user wants actual delivery or inbox handling:
 
-Based on their choice, refer to the **Gmail Auth Setup** section and guide them through configuration. Then generate a send script on the spot that includes:
+- export the approved drafts and contact table
+- hand off to a separately approved sender workflow
+- do not assume this skill can authenticate to Gmail, poll inboxes, or run automated follow-ups
 
-- Personalized variable substitution from Step 5
-- Staggered sending (default 30s delay, adjustable)
-- Daily send cap (see **Sending Volume Guidelines**)
-- Send log written to `sent_log.json` — records Message-ID per email for thread matching
-- Skips already-sent contacts to prevent duplicates
+#### Follow-up planning rules
 
-Generate install and run commands:
-
-```bash
-# App Password
-pip install python-dotenv
-python send_emails.py
-
-# OAuth2
-pip install google-auth-oauthlib google-auth-httplib2 google-api-python-client python-dotenv
-python send_emails.py
-```
-
-The loop starts the moment emails are sent.
-
----
-
-#### Part 3: Closed loop — fetch, analyze, follow up
-
-```
-[Emails sent] → fetch replies → AI classify → auto follow-up
-                      ↑_____________↓
-               repeat until every contact reaches a final state
-```
-
-**Final states** (loop stops):
-- ✅ Positive — flagged for manual action (send trial, pitch topics, etc.)
-- ❌ Rejected — closed
-- 🚫 Max follow-ups reached — closed (default: 2 attempts)
-
-**Fetching replies** — trigger with "check for replies" or "who replied":
-
-Generate a fetch script that matches replies using (in priority order):
-1. Message-ID — most accurate, from `sent_log.json`
-2. Sender email match
-3. Sender domain match
-
-Filtering: auto-detect OOO / no-reply responses; skip self-sent emails. Output: `replies.json`. Contacts with no reply are marked `no_reply`.
-
-**AI classification** — trigger with "analyze replies":
-
-| Status | Signal |
-|--------|--------|
-| ✅ Positive | Interested, wants to collaborate, asks for more info |
-| 🔄 Follow up | "Will look later", "reach out next month", etc. |
-| ❌ Rejected | Explicitly declined |
-| 📭 No reply | No response after specified number of days |
-| 🤖 Auto-reply | OOO or system-generated message |
-
-Three outputs: ① summary table with next action per contact ② grouped status counts ③ follow-up task list with dates and priority flags.
-
-**Auto follow-up** — trigger with "send follow-ups":
-
-| Classification | Action | Timing |
-|----------------|--------|--------|
-| ✅ Positive | Do NOT auto follow-up — flag for manual action | Immediate |
-| 🔄 Follow up | Send short "checking in" | +3 days after reply |
-| 📭 No reply (first) | Send follow-up #1 | +7 days after original send |
-| 📭 No reply (second) | Send follow-up #2 (final) | +7 days after #1 |
-| 📭 No reply (third+) | Mark closed — do not contact again | — |
-| ❌ Rejected | Mark closed — do not contact again | — |
-| 🤖 Auto-reply | Re-queue as no-reply, follow up after OOO window | +5 days |
-
----
-
-#### Follow-up email rules
-
-**Keep it short — 3 sentences max.** The goal is a gentle nudge, not a new pitch.
-
-- First follow-up: reference the original email briefly, restate the value in one line, single CTA
-- Second (final) follow-up: acknowledge it's the last one, keep the door open
-
-**Follow-up templates** (Claude generates these on the spot based on the original email):
-
-First follow-up:
-```
-Subject: Re: [original subject]
-
-Hi [Name], just circling back on my previous note in case it got buried.
-
-[One-line restatement of the gap/value from the original email.]
-
-Worth a quick look? — [Your Name]
-```
-
-Final follow-up:
-```
-Subject: Re: [original subject]
-
-Hi [Name], last follow-up from me — I don't want to clog your inbox.
-
-If [Your Product] ever becomes relevant for [site], feel free to reach out.
-
-Either way, keep up the great work. — [Your Name]
-```
-
-#### Contact lifecycle tracking
-
-After Stage D runs, every contact has a tracked state in `sent_log.json`:
-
-```json
-{
-  "to_email": "john@example.com",
-  "site": "example.com",
-  "status": "positive | follow_up | no_reply | rejected | closed",
-  "follow_up_count": 1,
-  "last_contact_date": "2025-01-15",
-  "final_state": false
-}
-```
-
-Loop continues until `final_state: true` for every contact.
-
----
-
-## Gmail Auth Setup
-
-### Option 1: App Password (personal accounts)
-
-**Best for:** Personal Gmail accounts, quick setup, single-machine use.
-
-> ⚠️ Requires two-factor authentication (2FA) to be enabled on the account.
-
-**1. Enable 2-Step Verification**
-
-Go to [Google Account Security](https://myaccount.google.com/security) and enable 2-Step Verification.
-
-**2. Generate an App Password**
-
-1. Go to [App Passwords](https://myaccount.google.com/apppasswords)
-2. Select app → `Mail`, Select device → `Other` → enter `outreach-tool`
-3. Click Generate and copy the **16-character password**
-
-**3. Enable IMAP (required for receiving)**
-
-Gmail → Settings → See all settings → Forwarding and POP/IMAP → **Enable IMAP** → Save Changes
-
-**4. Configure .env file**
-
-```
-GMAIL_ADDRESS=your.email@gmail.com
-GMAIL_APP_PASSWORD=xxxx xxxx xxxx xxxx
-SENDER_NAME=Your Name
-SENDER_SITE=yoursite.com
-```
-
-**5. Usage in script**
-
-```python
-import smtplib, imaplib, os
-from dotenv import load_dotenv
-load_dotenv()
-
-GMAIL = os.getenv("GMAIL_ADDRESS")
-PASSWORD = os.getenv("GMAIL_APP_PASSWORD").replace(" ", "")
-
-# Send
-smtp = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-smtp.login(GMAIL, PASSWORD)
-
-# Receive
-imap = imaplib.IMAP4_SSL('imap.gmail.com')
-imap.login(GMAIL, PASSWORD)
-```
-
----
-
-### Option 2: OAuth2 (Google Workspace / team accounts)
-
-**Best for:** Google Workspace, shared team use, compliance requirements.
-
-**1. Create a Google Cloud project**
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Click the project dropdown → New Project → name it `email-outreach` → Create
-
-**2. Enable the Gmail API**
-
-APIs & Services → Library → search `Gmail API` → Enable
-
-**3. Configure OAuth consent screen**
-
-1. APIs & Services → OAuth consent screen
-2. User Type: External (personal) or Internal (Workspace)
-3. Add Scopes:
-   - `https://www.googleapis.com/auth/gmail.send`
-   - `https://www.googleapis.com/auth/gmail.readonly`
-4. Add your Gmail address as a test user
-
-**4. Create OAuth2 credentials**
-
-APIs & Services → Credentials → Create Credentials → OAuth client ID → Desktop app → Download JSON → rename to `credentials.json` and place in project root
-
-**5. First-time authorization (run once only)**
-
-```python
-# auth_setup.py
-from google_auth_oauthlib.flow import InstalledAppFlow
-
-SCOPES = [
-    'https://www.googleapis.com/auth/gmail.send',
-    'https://www.googleapis.com/auth/gmail.readonly'
-]
-
-flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
-creds = flow.run_local_server(port=0)
-
-with open('token.json', 'w') as f:
-    f.write(creds.to_json())
-
-print("Authorization complete. token.json saved.")
-```
-
-A browser window will open automatically. After login, `token.json` is saved and reused for all future runs — no repeat authorization needed.
-
-**6. Usage in script**
-
-```python
-from google.oauth2.credentials import Credentials
-from google.auth.transport.requests import Request
-from googleapiclient.discovery import build
-
-def get_gmail_service():
-    creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-    if creds.expired and creds.refresh_token:
-        creds.refresh(Request())
-        with open('token.json', 'w') as f:
-            f.write(creds.to_json())
-    return build('gmail', 'v1', credentials=creds)
-```
-
-> ⚠️ Both `credentials.json` and `token.json` contain sensitive credentials. Add both to `.gitignore` — never commit them to Git.
+- first follow-up: short reminder with one-line value restatement
+- second follow-up: final gentle close-the-loop note
+- no aggressive automation
+- positive replies should always be flagged for manual handling

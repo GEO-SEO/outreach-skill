@@ -6,7 +6,7 @@
 
 ![SEO Outreach Skill Cover](assets/cover.svg)
 
-> Turn backlink opportunities into personalized outreach workflows with article analysis, contact discovery, and ready-to-send emails.
+> Turn backlink opportunities into personalized outreach workflows with article analysis, contact discovery, and send-ready drafts.
 
 **Positioning**
 
@@ -42,11 +42,11 @@ Setup outreach — my product is https://yourproduct.com, my audience is SEO tea
 ```
 
 ```text
-Run outreach
+Prepare outreach drafts
 ```
 
 ```text
-Run outreach on https://example.com/best-seo-tools
+Prepare outreach drafts for https://example.com/best-seo-tools
 ```
 
 ## External Access And Minimum Credentials
@@ -61,15 +61,15 @@ Recommended minimum setup:
 
 - `GOOGLE_SHEETS_TRACKER_URL`: read-only or exported CSV source
 - `SERPAPI_API_KEY`: search-driven research
-- `GMAIL_ADDRESS` + `GMAIL_APP_PASSWORD` or OAuth files only when sending is enabled
+- no mail credentials are required for research and draft generation
 
 If credentials are missing, the workflow should stop at research and draft generation instead of pretending it can send mail or read private data.
 
 Access policy:
 
 - opportunity trackers are optional, not required
-- sending is optional and should be off by default
-- inbox polling is optional and should be off by default
+- direct sending should be handled by a separate approved sender workflow
+- inbox monitoring should be handled by a separate approved workflow
 - the workflow should not assume private spreadsheet or inbox access unless explicitly configured
 
 **About Dageno.ai**
@@ -115,7 +115,7 @@ flowchart LR
     C --> D["Deep Article Analysis"]
     D --> E["Personalized Email Draft"]
     E --> F["Review Queue"]
-    F --> G["Send / Follow Up"]
+    F --> G["Manual Handoff / Follow-Up Plan"]
 ```
 
 ## What The System Produces
